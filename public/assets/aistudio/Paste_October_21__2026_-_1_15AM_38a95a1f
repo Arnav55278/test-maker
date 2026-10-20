@@ -1,0 +1,1056 @@
+# MASTER PROMPT: Build a Professional JEE Mock Test & Performance Analytics Platform
+
+## 1. Project Overview
+
+Build a fully functional, premium-quality web application using **Next.js** that allows a JEE aspirant to create custom mock tests, attempt them under realistic exam pressure, review every question, and improve speed, accuracy, and topic-wise performance over time.
+
+The platform should feel like a professional computer-based testing (CBT) environment inspired by real competitive examinations, while offering significantly better personal analytics and practice tools.
+
+This is a personal JEE preparation platform, not a generic quiz website.
+
+**Core objective:** Train the student to solve questions faster without sacrificing accuracy, develop exam temperament, identify weak concepts, and measure improvement through repeated mock tests.
+
+Do not build a static prototype. Build a real application with working question parsing, test execution, answer evaluation, persistence, review functionality, and analytics.
+
+---
+
+## 2. Technology Stack
+
+Use the following technologies:
+
+- **Framework:** Latest stable Next.js with App Router.
+- **Language:** TypeScript with strict type checking.
+- **Styling:** Tailwind CSS.
+- **UI components:** shadcn/ui and Lucide icons.
+- **Charts:** Recharts.
+- **Database:** PostgreSQL with Prisma ORM, or Supabase PostgreSQL.
+- **Authentication:** Optional for the first version, but architect the application so authentication can be added cleanly.
+- **Form validation:** Zod.
+- **Client-side state:** React state or Zustand where appropriate.
+- **Testing:** Vitest for unit tests and Playwright for critical end-to-end workflows.
+
+Use stable, compatible package versions. Avoid unnecessary dependencies.
+
+The application must be responsive on desktop and tablet, with desktop being the primary environment for realistic JEE mock testing.
+
+---
+
+# 3. Overall Application Structure
+
+Create the following routes:
+
+- `/dashboard` — Home dashboard and previous tests.
+- `/tests/new` — Paste questions and create a test.
+- `/tests/[id]/configure` — Configure test duration and exam settings.
+- `/tests/[id]/attempt` — Live test-taking interface.
+- `/tests/[id]/result` — Performance report after submission.
+- `/tests/[id]/review` — Detailed question-by-question review.
+- `/analytics` — Long-term performance and speed analytics.
+- `/settings` — Preferences and examination settings.
+
+Keep the navigation simple and consistent.
+
+The student should be able to go from opening the website to starting a previously created test in just a few clicks.
+
+---
+
+# 4. Dashboard
+
+Create an elegant dashboard with a professional academic aesthetic.
+
+## Header
+
+Include:
+
+- Logo and product name: **JEE Pressure Lab**.
+- Current date.
+- Quick access to Dashboard, Analytics, and Settings.
+- A prominent `+ Create New Test` button.
+
+## Performance overview
+
+Show summary cards for:
+
+1. Total tests attempted.
+2. Average accuracy.
+3. Average percentage score.
+4. Average time per question.
+5. Questions attempted.
+6. Current best score.
+
+All values must come from actual saved test data. Never display fabricated statistics.
+
+## Previous tests
+
+Display all saved tests in a clean table or card layout.
+
+Each test should show:
+
+- Test name.
+- Date attempted.
+- Number of questions.
+- Subject distribution.
+- Duration.
+- Score.
+- Accuracy.
+- Time used.
+- Status: Not attempted, In progress, or Completed.
+
+Provide search, sorting, and filters for subject, date, and test status.
+
+Clicking a completed test should open its result report. From there, the student must be able to review individual questions.
+
+A saved test should remain available even after refreshing the website or closing the browser.
+
+## Additional dashboard elements
+
+Include:
+
+- Recent performance trend.
+- Weakest topics based on actual attempts.
+- Strongest topics based on sufficient attempt data.
+- Recent speed improvement.
+- Quick Resume button for an unfinished test.
+- Empty states with clear instructions when no tests exist.
+
+Do not clutter the dashboard with decorative widgets that do not help the student prepare.
+
+---
+
+# 5. Create New Test: JSON Import Studio
+
+When the student clicks `Create New Test`, open a dedicated test creation screen.
+
+The central feature is a large, comfortable JSON editor where the student can paste a complete question set.
+
+Support both direct paste and loading a local `.json` file.
+
+Provide:
+
+- A large monospace editor.
+- Syntax highlighting.
+- Line numbers.
+- Format JSON button.
+- Clear editor button with confirmation.
+- Validate Questions button.
+- Live question count.
+- Subject distribution summary.
+- Error messages showing the exact question index and field.
+- A preview of parsed questions.
+- A final `Continue to Test Configuration` button.
+
+The system must parse and validate the actual JSON. Never silently discard malformed questions or replace invalid content with sample data.
+
+## 5.1 Recommended JSON format
+
+Use a documented, structured schema. Support a single object containing metadata and a `questions` array.
+
+Example:
+
+```json
+{
+  "title": "JEE Advanced Practice Test 01",
+  "questions": [
+    {
+      "id": "q1",
+      "subject": "Physics",
+      "subtopic": "Centre of Mass",
+      "question": "A particle of mass 2 kg moves with velocity 3 m/s. Calculate its momentum.",
+      "type": "integer",
+      "marks": 4,
+      "negativeMarks": 1,
+      "answer": 6,
+      "timeEstimateSeconds": 120
+    },
+    {
+      "id": "q2",
+      "subject": "Chemistry",
+      "subtopic": "Chemical Bonding",
+      "question": "Which of the following molecules are polar?",
+      "type": "multiple",
+      "options": [
+        { "id": "A", "text": "BF3" },
+        { "id": "B", "text": "NH3" },
+        { "id": "C", "text": "H2O" },
+        { "id": "D", "text": "CO2" }
+      ],
+      "answers": ["B", "C"],
+      "marks": 4,
+      "negativeMarks": 2,
+      "timeEstimateSeconds": 180
+    }
+  ]
+}
+```
+
+Support an optional test title, subject, subtopic, marks, negative marks, and time estimate.
+
+The question types must be represented internally using a strict TypeScript discriminated union and validated with Zod.
+
+Use these canonical type names:
+
+- `mcq`
+- `multiple`
+- `integer`
+- `matching`
+- `paragraph`
+
+Optionally support sensible aliases such as `multi_select` and `numerical` through a normalization layer.
+
+## 5.2 MCQ questions
+
+Schema:
+
+```json
+{
+  "id": "q3",
+  "subject": "Physics",
+  "question": "Which quantity is conserved in an isolated system?",
+  "type": "mcq",
+  "options": [
+    { "id": "A", "text": "Momentum" },
+    { "id": "B", "text": "Kinetic energy" },
+    { "id": "C", "text": "Potential energy" },
+    { "id": "D", "text": "Temperature" }
+  ],
+  "answer": "A",
+  "marks": 4,
+  "negativeMarks": 1
+}
+```
+
+Requirements:
+
+- Display all options as selectable answer cards or radio buttons.
+- Allow only one selected option.
+- Persist the selection when navigating between questions.
+- Support unanswered and marked-for-review states.
+- Evaluate the selected option against the correct option ID.
+
+## 5.3 Multiple-correct questions
+
+Schema:
+
+```json
+{
+  "id": "q4",
+  "subject": "Mathematics",
+  "question": "Select all correct statements.",
+  "type": "multiple",
+  "options": [
+    { "id": "A", "text": "Statement A" },
+    { "id": "B", "text": "Statement B" },
+    { "id": "C", "text": "Statement C" },
+    { "id": "D", "text": "Statement D" }
+  ],
+  "answers": ["A", "C"],
+  "marks": 4,
+  "negativeMarks": 2
+}
+```
+
+Requirements:
+
+- Allow multiple selections using checkboxes.
+- Compare answer sets correctly.
+- Support exact-match evaluation by default.
+- Allow configurable partial marking only when explicitly specified by the test configuration.
+- Make the scoring rule transparent before the test begins.
+
+## 5.4 Integer or numerical questions
+
+Schema:
+
+```json
+{
+  "id": "q5",
+  "subject": "Mathematics",
+  "question": "Calculate the value of 7 × 8.",
+  "type": "integer",
+  "answer": 56,
+  "marks": 4,
+  "negativeMarks": 0
+}
+```
+
+Requirements:
+
+- Provide a numerical input field.
+- Support negative integers, decimals when enabled, and scientific notation if configured.
+- Do not accidentally treat an unanswered field as zero.
+- Define numerical precision and tolerance explicitly for decimal answers.
+- Provide a configurable answer tolerance if necessary.
+
+Integer questions should default to exact numerical matching.
+
+## 5.5 Matching questions
+
+Schema:
+
+```json
+{
+  "id": "q6",
+  "subject": "Physics",
+  "question": "Match each physical quantity with its SI unit.",
+  "type": "matching",
+  "columnA": [
+    { "id": "A", "text": "Force" },
+    { "id": "B", "text": "Work" },
+    { "id": "C", "text": "Power" }
+  ],
+  "columnB": [
+    { "id": "1", "text": "Watt" },
+    { "id": "2", "text": "Joule" },
+    { "id": "3", "text": "Newton" }
+  ],
+  "correctMatch": {
+    "A": "3",
+    "B": "2",
+    "C": "1"
+  },
+  "marks": 4,
+  "negativeMarks": 1
+}
+```
+
+Requirements:
+
+- Render two clear columns.
+- Allow the student to select or connect an item in Column A with an item in Column B.
+- Support one-to-one matching by default.
+- Provide a usable alternative to drag-and-drop for keyboard and touch users.
+- Persist partial matching answers.
+- Validate the matching schema before test creation.
+
+## 5.6 Paragraph or comprehension questions
+
+Support a shared passage followed by several independently answerable subquestions.
+
+Schema:
+
+```json
+{
+  "id": "passage1",
+  "subject": "Physics",
+  "subtopic": "Mechanics",
+  "type": "paragraph",
+  "paragraph": "A body moves along a straight line with constant acceleration...",
+  "parts": [
+    {
+      "id": "part1",
+      "question": "Find the acceleration.",
+      "type": "integer",
+      "answer": 2,
+      "marks": 4,
+      "negativeMarks": 0
+    },
+    {
+      "id": "part2",
+      "question": "Which statement is correct?",
+      "type": "mcq",
+      "options": [
+        { "id": "A", "text": "Statement A" },
+        { "id": "B", "text": "Statement B" }
+      ],
+      "answer": "B",
+      "marks": 4,
+      "negativeMarks": 1
+    }
+  ]
+}
+```
+
+Requirements:
+
+- Render the paragraph once, separately from its subquestions.
+- Support MCQ, multiple-correct, integer, and matching question types inside paragraph groups.
+- Maintain independent answers, marking, review status, marks, and timing for each subquestion.
+- Display paragraph groups coherently in the question palette.
+- Count independently answerable subquestions correctly in question totals and analytics.
+- Do not accidentally award marks for an entire passage when only one subquestion is correct.
+
+## 5.7 JSON validation and security
+
+Before allowing the student to continue:
+
+- Validate the entire JSON structure.
+- Check for missing required fields.
+- Check duplicate IDs.
+- Check that correct answers reference existing option IDs.
+- Check that matching references are valid.
+- Check that paragraph subquestions use supported types.
+- Check that marks and durations are valid numbers.
+- Display all relevant validation errors clearly.
+
+Question content must be treated as plain text or sanitized Markdown. Do not execute HTML, scripts, or arbitrary code embedded in imported JSON.
+
+Store the original imported JSON so the test can be edited or recreated later.
+
+---
+
+# 6. Test Configuration Screen
+
+After successful validation, display a separate configuration screen.
+
+## Test summary
+
+Show:
+
+- Test title.
+- Total questions and independently answerable subquestions.
+- Subject-wise distribution.
+- Total maximum marks.
+- Estimated solving time.
+- Recommended duration.
+- Selected marking scheme.
+
+## Automatic duration recommendation
+
+Implement a transparent duration recommendation algorithm.
+
+For each independently answerable question, use its explicit `timeEstimateSeconds` when provided. Otherwise use a default estimate based on question type.
+
+Initial default estimates:
+
+- MCQ: 90 seconds.
+- Multiple-correct: 150 seconds.
+- Integer: 120 seconds.
+- Matching: 150 seconds.
+- Paragraph passage: 60 seconds of reading time, plus the estimates for its subquestions.
+
+Calculate:
+
+`Estimated solving time = sum of estimated question and passage-reading times`
+
+`Recommended test duration = max(5 minutes, estimated solving time − 15 minutes)`
+
+Display the calculation and allow the student to override the recommendation.
+
+Do not silently remove 15 minutes from every individual question. The deduction is applied once to the complete test.
+
+If the calculated time is shorter than a sensible minimum, use the minimum and explain why.
+
+For paragraph groups, count shared passage-reading time once, not once per subquestion.
+
+For a user-provided duration estimate, preserve the value in the test configuration.
+
+## Configuration options
+
+Provide:
+
+- Test duration.
+- Enable fullscreen mode.
+- Enable warning when leaving fullscreen.
+- Enable warning when switching browser tabs, where detectable.
+- Enable or disable a visible timer.
+- Enable question palette.
+- Enable question navigation.
+- Enable mark-for-review.
+- Enable automatic submission at zero seconds.
+- Select a scoring scheme.
+- Optional section-wise time limits.
+- Shuffle questions.
+- Shuffle options where safe.
+- Allow or disable negative marking.
+- Enable optional keyboard shortcuts.
+
+The default should simulate exam conditions without unnecessary distractions.
+
+Do not claim that browser fullscreen or tab detection makes cheating impossible. Do not attempt to prevent the student from accessing operating-system controls or forcibly trap the user in fullscreen.
+
+Provide a clear pre-test confirmation screen explaining the duration, scoring, and available controls.
+
+---
+
+# 7. Realistic JEE Test-Taking Interface
+
+This is the most important part of the application.
+
+Build a distraction-free, high-performance CBT interface optimized for desktop screens.
+
+## Layout
+
+Use a two-panel design.
+
+**Left and center area: Question workspace**
+
+- Large, readable question text.
+- Subject and question number.
+- Question type label.
+- Answer controls appropriate to the question type.
+- Previous and Next buttons.
+- Clear Response button.
+- Mark for Review button.
+- Save & Next button.
+
+**Right sidebar: Question navigation panel**
+
+- Question palette with numbered tiles.
+- Subject tabs or filters.
+- Remaining time.
+- Attempted count.
+- Unanswered count.
+- Marked-for-review count.
+- Not-visited count.
+- Current section information, if applicable.
+
+The sidebar should remain accessible throughout the test and collapse gracefully on smaller screens.
+
+## Question palette states
+
+Use distinct visual states with a persistent legend:
+
+- Not visited.
+- Visited but unanswered.
+- Answered.
+- Marked for review.
+- Answered and marked for review.
+
+These states must be calculated from actual response data, not maintained as unrelated visual flags.
+
+Clicking a question number should navigate directly to that question.
+
+For paragraph groups, display independent subquestion numbers in the palette and clearly indicate their relationship to the shared passage.
+
+## Timer behavior
+
+- Display the remaining time prominently.
+- Use a real deadline-based countdown rather than decrementing a counter that drifts when a tab is inactive.
+- Persist the test start time and deadline.
+- Recalculate remaining time after page refresh.
+- Display warnings at 15 minutes, 5 minutes, and 1 minute remaining.
+- Automatically submit when the deadline expires if this setting is enabled.
+- Never restart the timer after a refresh.
+- Handle temporary network interruptions gracefully.
+
+## Answer persistence
+
+Every answer must be saved promptly.
+
+Persist:
+
+- Selected options.
+- Multiple selections.
+- Numerical responses.
+- Matching selections.
+- Mark-for-review state.
+- Question navigation state.
+- Time spent per question.
+
+Provide a subtle save indicator, such as `Saved` or `Saving...`.
+
+If the application uses a server database, implement reliable autosave and conflict handling. Use local storage or IndexedDB as a recovery layer where appropriate.
+
+Do not lose answers when the user navigates between questions, refreshes the page, or experiences a temporary network interruption.
+
+## Keyboard shortcuts
+
+Support sensible shortcuts:
+
+- `1–4` or configured letter keys for MCQ options.
+- Arrow keys for question navigation where appropriate.
+- `N` for next question.
+- `P` for previous question.
+- `R` for mark for review.
+- `C` for clear response, with safe focus handling.
+
+Never let global keyboard shortcuts interfere with typing numerical answers or interacting with accessible form controls.
+
+## Fullscreen mode
+
+When enabled, request fullscreen only after the student explicitly starts the test.
+
+If fullscreen is exited, display a configurable warning. Do not falsely guarantee that fullscreen cannot be exited or use deceptive lock-screen behavior.
+
+## Submission workflow
+
+When the student clicks Submit Test:
+
+1. Open a confirmation modal.
+2. Show answered, unanswered, and marked-for-review counts.
+3. Warn if unanswered questions remain.
+4. Allow the student to cancel and return to the test.
+5. Confirm final submission.
+6. Lock the submitted attempt against further answer changes.
+7. Calculate results and navigate to the report.
+
+Prevent duplicate submissions and handle the case where the timer expires during a submission request.
+
+---
+
+# 8. Question Rendering and Mathematics
+
+JEE questions frequently contain mathematical notation, equations, matrices, chemical formulas, and physics expressions.
+
+Support:
+
+- LaTeX rendering using KaTeX.
+- Inline and display equations.
+- Fractions, integrals, summations, matrices, vectors, and Greek symbols.
+- Chemical formulas and subscripts.
+- Superscripts and powers.
+- Long questions with scrolling.
+- Code-like or monospaced numerical expressions when necessary.
+
+For example, render:
+
+`\(F = ma\)`
+
+as properly formatted mathematics rather than showing raw LaTeX.
+
+Ensure long mathematical expressions remain readable on the question screen.
+
+Preserve imported question text accurately. Do not automatically rewrite or paraphrase the original questions.
+
+---
+
+# 9. Automatic Evaluation Engine
+
+Implement a centralized, deterministic scoring engine.
+
+Every supported question type must have a dedicated evaluation function.
+
+Calculate:
+
+- Maximum marks.
+- Marks obtained.
+- Correct answers.
+- Incorrect answers.
+- Unanswered questions.
+- Accuracy.
+- Attempt rate.
+- Total time spent.
+- Average time per attempted question.
+- Average time per correct answer.
+- Subject-wise scores.
+- Topic-wise scores.
+
+Use the following formulas:
+
+`Accuracy = Correct answers / Attempted questions × 100`
+
+`Attempt rate = Attempted questions / Total questions × 100`
+
+`Score percentage = Marks obtained / Maximum marks × 100`
+
+Handle zero denominators safely.
+
+Use the configured marking scheme to calculate marks. Never hardcode a universal JEE marking scheme because marking differs across examinations and question types.
+
+For multiple-correct questions, support exact-match scoring and explicitly configured partial marking.
+
+For matching questions, support exact-match scoring by default, with optional configurable partial marking.
+
+For numerical questions, apply the configured precision and tolerance rules.
+
+For paragraph groups, evaluate each subquestion independently.
+
+If negative marking is disabled, incorrect responses must not receive negative marks.
+
+Keep evaluation logic separate from UI components and cover it with unit tests.
+
+---
+
+# 10. Results and Performance Report
+
+After submission, show a polished report that gives immediate feedback and encourages data-driven improvement.
+
+## 10.1 Result header
+
+Display:
+
+- Test title.
+- Date and time.
+- Total score and maximum marks.
+- Percentage score.
+- Accuracy.
+- Total time used.
+- Questions attempted.
+- Number of correct and incorrect answers.
+- Number of unanswered questions.
+
+Use subtle animations for score presentation. Prioritize readability over flashy effects.
+
+## 10.2 Charts
+
+Build interactive charts using Recharts.
+
+Include:
+
+**A. Performance breakdown**
+
+A chart showing correct, incorrect, and unanswered questions.
+
+**B. Subject-wise performance**
+
+A bar chart comparing marks, accuracy, and attempted questions across Physics, Chemistry, and Mathematics.
+
+**C. Time analysis**
+
+Show time spent per question and identify questions where the student spent unusually long compared with the configured estimate.
+
+**D. Topic performance**
+
+Display accuracy and score by subtopic, using actual attempts as the data source.
+
+**E. Performance trend**
+
+Show score and accuracy across previously completed tests in chronological order.
+
+All charts must use real data from saved attempts.
+
+Provide useful empty states when there are not enough attempts to calculate a trend.
+
+## 10.3 Strong and weak topics
+
+Generate a topic report containing:
+
+- Strong topics.
+- Topics needing revision.
+- Topics with low accuracy.
+- Topics where solving time is too high.
+- Topics with repeated mistakes.
+- Topics with insufficient data.
+
+Do not label a topic as weak or strong based on one question alone without a qualification. Use configurable minimum sample sizes and indicate low confidence where appropriate.
+
+## 10.4 Speed improvement analysis
+
+Speed is a major objective of this application.
+
+For each question, compare:
+
+- Actual time spent.
+- Expected solving time.
+- Whether the answer was correct.
+- Whether it was skipped.
+- Whether it was marked for review.
+
+Classify questions into useful categories:
+
+- Fast and correct.
+- Slow and correct.
+- Fast and incorrect.
+- Slow and incorrect.
+- Skipped.
+
+Generate actionable insights, such as:
+
+- Spending too long on difficult questions.
+- Losing accuracy on multiple-correct questions.
+- Taking too much time on numerical calculations.
+- Repeatedly revisiting certain topics.
+- Improving accuracy while maintaining speed.
+
+Avoid generic AI-generated advice unsupported by actual performance data.
+
+## 10.5 Main report actions
+
+Provide prominent buttons:
+
+- `Review Test`
+- `View Analytics`
+- `Retake Test`
+- `Back to Dashboard`
+
+Retaking a test must create a new attempt while preserving the original result. It must not overwrite the previous attempt.
+
+---
+
+# 11. Detailed Test Review
+
+The review screen must be a fully functional learning tool.
+
+For each question, display:
+
+- Original question.
+- Question type.
+- Student's answer.
+- Correct answer.
+- Result status.
+- Marks awarded.
+- Maximum marks.
+- Time spent.
+- Topic.
+- Review flag.
+- Explanation, if supplied in the JSON.
+
+Use clear visual distinctions for correct, incorrect, and unanswered responses.
+
+Provide filters for:
+
+- All questions.
+- Incorrect answers.
+- Unanswered questions.
+- Marked-for-review questions.
+- Slow questions.
+- Subject.
+- Subtopic.
+
+Allow the student to navigate through the test in its original order.
+
+If an explanation is not provided, display `No explanation supplied` rather than inventing one.
+
+For future extensibility, support an optional `solution` field and an optional `difficulty` field.
+
+The review screen must be available later from the dashboard, not only immediately after submission.
+
+---
+
+# 12. Long-Term Analytics Dashboard
+
+Create a separate analytics page that combines results from multiple attempts.
+
+Track:
+
+- Total questions solved.
+- Overall accuracy.
+- Average time per question.
+- Score trends.
+- Subject-wise performance.
+- Topic-wise accuracy.
+- Improvement between attempts.
+- Repeated errors.
+- Question types causing the most difficulty.
+- Percentage of questions solved within their estimated time.
+
+Allow filtering by date range, subject, and test.
+
+## Meaningful analytics
+
+Compare similar tests carefully. If tests have different difficulty, question counts, or marking schemes, explain the limitations of direct score comparisons.
+
+Distinguish between:
+
+- Accuracy improvement.
+- Speed improvement.
+- Score improvement.
+- Improvement in question selection.
+
+Do not claim to predict an official JEE rank or percentile from arbitrary custom tests.
+
+Store historical results so analytics remain available after the browser is closed.
+
+---
+
+# 13. Database and Data Model
+
+Design a proper relational data model.
+
+Include entities such as:
+
+- `Test`
+- `Question`
+- `TestAttempt`
+- `QuestionResponse`
+- `TopicPerformance`
+- `UserSettings`
+
+Suggested relationships:
+
+- A test contains multiple questions.
+- A test may have multiple attempts.
+- An attempt stores its own start time, deadline, submission time, status, score, and configuration snapshot.
+- A question response stores the answer, status, review flag, time spent, and evaluation result.
+- Paragraph subquestions are linked to their parent passage.
+- Historical attempts retain the question and marking configuration used during that attempt.
+
+Preserve an immutable snapshot of question content and scoring settings for each attempt. Editing a test later must not change previously submitted results.
+
+Use database transactions where appropriate.
+
+Provide migrations, seed data for development, and sensible database indexes.
+
+Do not use in-memory arrays as the permanent data store.
+
+If a backend database is not configured, provide an explicit local-development mode with persistent browser storage and clearly document its limitations. Do not silently pretend local data is synchronized with a server.
+
+---
+
+# 14. UI Design System
+
+The interface should look premium, calm, modern, and purpose-built for serious JEE preparation.
+
+## Visual direction
+
+Use a restrained palette:
+
+- Primary: Deep navy or dark blue.
+- Accent: Electric blue.
+- Success: Muted green.
+- Warning: Amber.
+- Error: Muted red.
+- Background: Soft neutral white or cool gray.
+
+Use a modern sans-serif font, consistent spacing, clean typography, subtle borders, and restrained shadows.
+
+The dashboard and analytics pages can use a light theme with attractive charts.
+
+The test-taking interface should prioritize legibility, stable layout, and low distraction.
+
+Offer light and dark themes.
+
+Avoid:
+
+- Excessive gradients.
+- Glassmorphism everywhere.
+- Oversized decorative cards.
+- Unnecessary animations during the test.
+- Excessive emojis.
+- Childish gamification.
+- Fake statistics.
+- Fake loading delays.
+
+Use a consistent design system with reusable components.
+
+Include accessible contrast, keyboard navigation, clear focus states, and proper form labels.
+
+---
+
+# 15. Reliability and Edge Cases
+
+Handle all of the following:
+
+- Invalid JSON.
+- Missing question fields.
+- Duplicate question IDs.
+- Empty tests.
+- Very long questions.
+- Missing optional subtopics.
+- Multiple-correct questions with invalid answer IDs.
+- Matching questions with invalid references.
+- Paragraphs with several subquestions.
+- Page refresh during a test.
+- Temporary network failure.
+- Duplicate submissions.
+- Expired test deadlines.
+- Browser fullscreen exit.
+- Changing test configuration after an attempt has started.
+- Editing a test after previous attempts.
+- Empty analytics datasets.
+- Division by zero.
+- Unanswered numerical questions.
+- Incorrectly formatted numerical answers.
+- Questions containing LaTeX.
+- Database errors and failed autosaves.
+
+Use clear error messages and recovery mechanisms.
+
+Never silently discard student responses.
+
+---
+
+# 16. Development Workflow
+
+Build the application in logical phases.
+
+### Phase 1 — Foundation
+
+- Initialize the Next.js application.
+- Configure TypeScript and Tailwind CSS.
+- Create the design system.
+- Implement the dashboard and navigation.
+- Configure the database and data models.
+
+### Phase 2 — Question import
+
+- Build the JSON editor.
+- Implement Zod validation.
+- Implement all five question types.
+- Build the question preview.
+- Persist imported tests.
+
+### Phase 3 — Test engine
+
+- Build the configuration screen.
+- Implement duration estimation.
+- Build the CBT interface.
+- Implement navigation and question palette.
+- Implement the timer and autosave.
+- Implement fullscreen and submission workflow.
+
+### Phase 4 — Evaluation
+
+- Build the scoring engine.
+- Add unit tests for every question type.
+- Implement result calculation.
+- Preserve historical attempts.
+
+### Phase 5 — Reports
+
+- Build the result report.
+- Implement question review.
+- Add charts and topic analytics.
+- Add speed analysis.
+
+### Phase 6 — Production readiness
+
+- Add loading, empty, and error states.
+- Test persistence and recovery.
+- Test the complete attempt lifecycle.
+- Add responsive layouts and accessibility.
+- Fix TypeScript errors and lint issues.
+- Verify all major workflows end to end.
+
+Work incrementally. Keep the project runnable throughout development.
+
+---
+
+# 17. Required Acceptance Tests
+
+The application is not complete until all of these work:
+
+1. I can paste a valid JSON question set and create a test.
+2. Invalid JSON produces useful validation errors.
+3. All five supported question types render correctly.
+4. Paragraph passages support independently answerable subquestions.
+5. I can configure the duration and examination settings.
+6. The timer continues correctly after refreshing the browser.
+7. My answers remain saved when I navigate between questions.
+8. The question palette accurately reflects every response state.
+9. I can mark questions for review and return to them.
+10. Submitting the test produces correctly calculated results.
+11. Negative marking and partial marking follow the configured rules.
+12. The report displays actual subject-wise and topic-wise statistics.
+13. I can reopen and review any completed test.
+14. Retaking a test creates a separate attempt.
+15. Previous attempts remain unchanged if I edit the original test.
+16. Analytics update when new attempts are completed.
+17. The application does not show fake scores, fabricated insights, or nonfunctional controls.
+18. The entire workflow works without manually editing the database.
+19. There are no major TypeScript, build, or runtime errors.
+20. A fresh installation can be configured using documented environment variables and setup instructions.
+
+---
+
+# 18. Final Deliverables
+
+Produce a complete working project, not just a design mockup.
+
+Deliver:
+
+- Full Next.js source code.
+- Organized folder structure.
+- Reusable UI components.
+- Database schema and migrations.
+- Environment variable example file.
+- JSON format documentation.
+- Sample JSON test containing all supported question types.
+- Setup and run instructions.
+- Automated tests for scoring, timing, validation, and submission.
+- Deployment instructions.
+- A README documenting the architecture and limitations.
+
+Use real data flow between all screens.
+
+Do not use placeholder buttons, fake chart data in production, hardcoded results, simulated database persistence, or unfinished pages.
+
+If an external service requires credentials, document the requirement and provide a working local-development setup where feasible.
+
+## Final instruction
+
+First establish a reliable application architecture, then implement each phase fully. Prioritize the correctness of the test engine, timer, autosave, scoring, and historical data over decorative UI.
+
+The finished product should feel like a serious personal JEE examination system that helps me become faster, more accurate, and more disciplined with every attempt.
+
+**Success means I can import my own questions, take a timed mock test, submit it, analyze my mistakes, review the entire test later, and track genuine improvement over weeks and months.**

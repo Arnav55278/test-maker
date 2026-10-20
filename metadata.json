@@ -1,0 +1,6 @@
+{
+  "name": "JEE Pressure Lab - Mock Test & Performance Analytics",
+  "description": "Professional CBT mock test environment, rigorous evaluation engine, and performance analytics for JEE Main & Advanced aspirants.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
