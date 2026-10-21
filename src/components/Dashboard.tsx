@@ -22,9 +22,12 @@ import {
   TrendingDown,
   TrendingUp,
   Trash2,
+  Trophy,
+  Users,
   XCircle,
   Zap,
 } from 'lucide-react';
+import { generateCumulativeLeaderboard } from '../utils/cohortSimulation';
 
 interface DashboardProps {
   tests: TestMetadata[];
@@ -137,6 +140,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     return { strongTopics: strong, weakTopics: weak };
   }, [completedAttempts]);
+
+  // Compute 16-aspirant cohort standings across all tests
+  const cumulativeLeaderboard = useMemo(() => {
+    return generateCumulativeLeaderboard(tests, attempts);
+  }, [tests, attempts]);
+
+  const userCohortStanding = useMemo(() => {
+    return cumulativeLeaderboard.find((e) => e.isUser);
+  }, [cumulativeLeaderboard]);
 
   // Filter and sort tests
   const filteredTests = useMemo(() => {
@@ -296,6 +308,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        {/* Peer Cohort Standing Quick Banner */}
+        {userCohortStanding && (
+          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/40 border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-mono font-bold text-sm flex items-center justify-center shadow-md">
+                #{userCohortStanding.rank}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white text-sm">
+                    Cohort Rank: #{userCohortStanding.rank} of 16 JEE Aspirants
+                  </span>
+                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                    {userCohortStanding.tier}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                  Competing against Kota toppers and disciplined peers • Score: {userCohortStanding.marksObtained} marks
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onNavigate({ path: 'leaderboard' })}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm self-start sm:self-auto"
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Open Leaderboard</span>
+            </button>
+          </div>
+        )}
+
         {/* Speed & Topic Diagnostic Highlights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Diagnostic: Strong Topics */}

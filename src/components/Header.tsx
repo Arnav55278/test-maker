@@ -8,6 +8,7 @@ import {
   Plus,
   Settings,
   Sparkles,
+  Trophy,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -77,6 +78,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
+              </button>
+
+              <button
+                onClick={() => onNavigate({ path: 'leaderboard' })}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition ${
+                  isCurrent('leaderboard')
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                }`}
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                Leaderboard
               </button>
 
               <button

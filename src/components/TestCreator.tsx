@@ -156,40 +156,45 @@ export const TestCreator: React.FC<TestCreatorProps> = ({ onNavigate, onTestCrea
   );
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [copyFeedback, setCopyFeedback] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-run validation on demand or whenever user clicks Validate
   const handleValidate = () => {
+    setActionError(null);
     const res = validateAndNormalizeTestJson(jsonText);
     setValidationResult(res);
   };
 
   const handleFormatJson = () => {
     try {
+      setActionError(null);
       const parsed = JSON.parse(jsonText);
       const formatted = JSON.stringify(parsed, null, 2);
       setJsonText(formatted);
       const res = validateAndNormalizeTestJson(formatted);
       setValidationResult(res);
     } catch (err: any) {
-      alert(`Cannot format invalid JSON: ${err.message}`);
+      setActionError(`Cannot format invalid JSON: ${err.message}`);
     }
   };
 
   const handleClear = () => {
+    setActionError(null);
     setJsonText('{\n  "title": "Custom JEE Practice Test",\n  "questions": []\n}');
     setShowClearConfirm(false);
     setValidationResult(null);
   };
 
   const handleLoadSample = () => {
+    setActionError(null);
     setJsonText(STARTER_SAMPLE_JSON);
     const res = validateAndNormalizeTestJson(STARTER_SAMPLE_JSON);
     setValidationResult(res);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setActionError(null);
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -207,11 +212,12 @@ export const TestCreator: React.FC<TestCreatorProps> = ({ onNavigate, onTestCrea
   };
 
   const handleProceedToConfigure = () => {
+    setActionError(null);
     const currentValidation = validateAndNormalizeTestJson(jsonText);
     setValidationResult(currentValidation);
 
     if (!currentValidation.isValid || currentValidation.normalizedQuestions.length === 0) {
-      alert('Please resolve all validation errors before proceeding.');
+      setActionError('Please resolve all validation errors before proceeding.');
       return;
     }
 
@@ -301,6 +307,18 @@ export const TestCreator: React.FC<TestCreatorProps> = ({ onNavigate, onTestCrea
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {actionError && (
+          <div className="mb-4 bg-rose-950/80 border border-rose-500/60 text-rose-200 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{actionError}</span>
+            </div>
+            <button onClick={() => setActionError(null)} className="text-rose-400 hover:text-white">
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Validation and Summary Status Bar */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">

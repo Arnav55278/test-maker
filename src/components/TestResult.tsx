@@ -37,9 +37,14 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
+  Trophy,
+  Users,
   XCircle,
   Zap,
 } from 'lucide-react';
+import { generateTestLeaderboard } from '../utils/cohortSimulation';
+import { PersonaSimulator } from './PersonaSimulator';
+import { NextTargetWidget } from './NextTargetWidget';
 
 interface TestResultProps {
   test: TestMetadata;
@@ -183,6 +188,15 @@ export const TestResult: React.FC<TestResultProps> = ({ test, attempt, onNavigat
     return list;
   }, [ev, speedQuadrant]);
 
+  // Compute 16-aspirant cohort standings for this test
+  const leaderboard = useMemo(() => {
+    return generateTestLeaderboard(test, attempt);
+  }, [test, attempt]);
+
+  const userLeaderboardEntry = useMemo(() => {
+    return leaderboard.find((e) => e.isUser);
+  }, [leaderboard]);
+
   if (!ev) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
@@ -259,6 +273,14 @@ export const TestResult: React.FC<TestResultProps> = ({ test, attempt, onNavigat
               </button>
 
               <button
+                onClick={() => onNavigate({ path: 'leaderboard' })}
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg border border-slate-700 transition"
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>Leaderboard</span>
+              </button>
+
+              <button
                 onClick={() => onNavigate({ path: 'analytics' })}
                 className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg border border-slate-700 transition"
               >
@@ -329,10 +351,53 @@ export const TestResult: React.FC<TestResultProps> = ({ test, attempt, onNavigat
               <div className="text-[11px] text-slate-500 mt-1">Per attempted problem</div>
             </div>
           </div>
+
+          {/* 16-Aspirant Cohort Standing Card */}
+          {userLeaderboardEntry && (
+            <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-mono font-bold text-base flex items-center justify-center shadow-md">
+                  #{userLeaderboardEntry.rank}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm">
+                      Cohort Standing: Rank {userLeaderboardEntry.rank} of 16 Aspirants
+                    </span>
+                    <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                      Top {Math.round((userLeaderboardEntry.rank / 16) * 100)}%
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400 font-mono block mt-0.5">
+                    {userLeaderboardEntry.rank === 1
+                      ? 'Congratulations! You achieved the top rank in this mock paper!'
+                      : `Gap to Rank 1 Topper (${leaderboard[0].name}): ${userLeaderboardEntry.marksObtained - leaderboard[0].marksObtained} marks`}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onNavigate({ path: 'leaderboard' })}
+                className="text-xs font-semibold text-blue-400 hover:text-blue-300 font-mono flex items-center gap-1 self-start sm:self-auto"
+              >
+                <span>View Full Leaderboard Table</span> &rarr;
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+        {/* Adaptive Score Target Engine Widget (60 / 100 / 180 / 300 / 360) */}
+        <NextTargetWidget
+          currentMarks={ev.marksObtained}
+          currentMaxMarks={ev.maxMarks}
+          leaderboard={leaderboard}
+        />
+
+        {/* Persona Simulator: "If this person gave the marks, how much would they score?" */}
+        <PersonaSimulator test={test} attempt={attempt} />
+
         {/* Empirical Actionable Insights Alert Cards */}
         {insights.length > 0 && (
           <div className="space-y-3">

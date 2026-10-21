@@ -7,6 +7,7 @@ export type AppRoute =
   | { path: 'tests/attempt'; testId: string; attemptId?: string }
   | { path: 'tests/result'; testId: string; attemptId: string }
   | { path: 'tests/review'; testId: string; attemptId: string }
+  | { path: 'leaderboard' }
   | { path: 'analytics' }
   | { path: 'settings' };
 
@@ -19,6 +20,10 @@ export function parseRouteFromLocation(): AppRoute {
 
   if (parts.length === 0 || parts[0] === 'dashboard') {
     return { path: 'dashboard' };
+  }
+
+  if (parts[0] === 'leaderboard') {
+    return { path: 'leaderboard' };
   }
 
   if (parts[0] === 'analytics') {
@@ -77,6 +82,9 @@ export function navigateTo(route: AppRoute) {
       break;
     case 'tests/review':
       target = `#/tests/${route.testId}/review/${route.attemptId}`;
+      break;
+    case 'leaderboard':
+      target = '#/leaderboard';
       break;
     case 'analytics':
       target = '#/analytics';

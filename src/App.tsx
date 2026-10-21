@@ -9,6 +9,7 @@ import { TestConfigure } from './components/TestConfigure';
 import { TestAttemptComponent } from './components/TestAttempt';
 import { TestResult } from './components/TestResult';
 import { TestReview } from './components/TestReview';
+import { Leaderboard } from './components/Leaderboard';
 import { Analytics } from './components/Analytics';
 import { Settings } from './components/Settings';
 import { AlertCircle } from 'lucide-react';
@@ -205,6 +206,9 @@ export function App() {
 
         return <TestReview test={test} attempt={attempt} onNavigate={navigateTo} />;
       }
+
+      case 'leaderboard':
+        return <Leaderboard tests={tests} attempts={attempts} onNavigate={navigateTo} />;
 
       case 'analytics':
         return <Analytics tests={tests} attempts={attempts} onNavigate={navigateTo} />;

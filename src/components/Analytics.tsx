@@ -39,9 +39,14 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
+  Trophy,
+  Users,
   XCircle,
   Zap,
 } from 'lucide-react';
+import { generateCumulativeLeaderboard } from '../utils/cohortSimulation';
+import { PersonaSimulator } from './PersonaSimulator';
+import { NextTargetWidget } from './NextTargetWidget';
 
 interface AnalyticsProps {
   tests: TestMetadata[];
@@ -59,6 +64,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ tests, attempts, onNavigat
       .filter((a) => a.status === 'completed' && a.evaluation)
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }, [attempts]);
+
+  const cumulativeLeaderboard = useMemo(() => {
+    return generateCumulativeLeaderboard(tests, attempts);
+  }, [tests, attempts]);
+
+  const activeTestForSimulation = tests[0];
+  const activeAttemptForSimulation = completedAttempts[completedAttempts.length - 1];
 
   // Overall aggregate stats
   const overallMetrics = useMemo(() => {
@@ -306,6 +318,25 @@ export const Analytics: React.FC<AnalyticsProps> = ({ tests, attempts, onNavigat
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+        {/* Adaptive Score Target Engine Widget (60 / 100 / 180 / 300 / 360) */}
+        <NextTargetWidget
+          currentMarks={
+            completedAttempts.reduce((acc, a) => acc + (a.evaluation?.marksObtained || 0), 0)
+          }
+          currentMaxMarks={
+            completedAttempts.reduce((acc, a) => acc + (a.evaluation?.maxMarks || 0), 0) || 100
+          }
+          leaderboard={cumulativeLeaderboard}
+        />
+
+        {/* Persona Simulator: "If this person gave the marks, how much would they score?" */}
+        {activeTestForSimulation && (
+          <PersonaSimulator
+            test={activeTestForSimulation}
+            attempt={activeAttemptForSimulation}
+          />
+        )}
+
         {/* Row 1: Chronological Score & Accuracy Progression */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
